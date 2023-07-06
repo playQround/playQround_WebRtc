@@ -23,8 +23,11 @@ export class webRtcGateway{
 
     // 3단계 - 응답 생성
     @SubscribeMessage("answer")
-    handleAnswerMessage(client: Socket, answer: any){
-        client.broadcast.to("1234").emit("answer", { userId: client.id, answer});
+    handleAnswerMessage(client: Socket, {answer, responseOffer}){
+        client.broadcast.to("1234").emit("answer", { 
+            userId: client.id,
+            answer, 
+            responseOffer});
     }
 
     // 4단계 - 연결 후보 교환
@@ -32,4 +35,11 @@ export class webRtcGateway{
     handleIcecandidateMessage(client: Socket, candidate: any){
         client.broadcast.to("1234").emit("icecandidate", { userId: client.id, candidate });
     }
+
+    //
+    // @SubscribeMessage("disconnect")
+    // handleDisconnect(client: Socket, event: any) {
+    //     // 클라이언트의 연결 해제 이벤트 처리
+    //     client.broadcast.to("1234").emit("disconnect", { userId: client.id });
+    // }
 }
