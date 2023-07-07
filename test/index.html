@@ -8,26 +8,21 @@
 </head>
 
 <body>
-    <button onclick="useMedia()"> Use Media</button>
     <button onclick="share()"> Share </button>
-    <div id="container" style = "width: 50px; height: 50px;">
+    <button id="mediaControl" onclick="mediaControl()"> Stop Media</button>
+    <div id="container" style="width: 50px; height: 50px;">
         Your Video
         <video id="localVideo" autoplay></video>
 
     </div>
-    <div>
-        Remote Video
-        <video id="remoteVideo" autoplay></video>
-    </div>
 
-    web
     <script src="http://localhost:3000/socket.io/socket.io.js"></script>
     <script>
-        // mediaControl
-        let localVideo = document.getElementById('localVideo');
-        let remoteVideo = document.getElementById('remoteVideo');
+        // 사용 변수 목록
+        let localVideo = document.getElementById("localVideo");
+        let remoteVideo = document.getElementById("remoteVideo");
+        let mediaControlButton = document.getElementById("mediaControl")
         let localStream;
-        let remoteStream;
         let peerConnection;
         let peerInfo = {};
         let selectedCandidate = {};
@@ -35,16 +30,14 @@
         const makePeerConnect = async(userId) => {
             peerInfo[userId] = new Object();
             peerInfo[userId].peerConnection = new RTCPeerConnection({
-                "iceServers": [
-                    {
-                        urls : 'stun:stun.l.google.com:19302'
-                    }
-                ]
+                "iceServers": [{
+                    urls: 'stun:stun.l.google.com:19302'
+                }]
             });
             peerInfo[userId].peerConnection.addEventListener("icecandidate", icecandidate);
             peerInfo[userId].peerConnection.addEventListener("addstream", addStream);
 
-            for (let track of localStream.getTracks()){
+            for (let track of localStream.getTracks()) {
                 await peerInfo[userId].peerConnection.addTrack(track, localStream);
             }
 
@@ -52,10 +45,6 @@
 
         // socket
         let socket = io("http://localhost:3000");
-
-        // socket.onclose = () => {
-        //     socket.emit("disconnect", evnet);
-        // }
 
         socket.on('enter', async({
             userId
@@ -73,11 +62,15 @@
             if (!peerInfo[userId]) {
                 await makePeerConnect(userId);
                 await peerInfo[userId].peerConnection.setRemoteDescription(offer);
-                
+
                 const answer = await peerInfo[userId].peerConnection.createAnswer(offer);
 
                 await peerInfo[userId].peerConnection.setLocalDescription(answer);
-                socket.emit("answer", {answer, offer, toUserId: userId});
+                socket.emit("answer", {
+                    answer,
+                    offer,
+                    toUserId: userId
+                });
             }
         });
 
@@ -87,9 +80,7 @@
             responseOffer,
             toUserId
         }) => {
-            console.log("received answer", userId);
-            console.log("find", userId, peerInfo[toUserId]);
-                if(peerInfo[toUserId] === undefined){
+            if (peerInfo[toUserId] === undefined) {
                 await peerInfo[userId].peerConnection.setRemoteDescription(answer);
             };
         })
@@ -98,31 +89,34 @@
             userId,
             candidate
         }) => {
-            console.log(candidate);
-            if (selectedCandidate[candidate.candidate] === undefined){
+            if (selectedCandidate[candidate.candidate] === undefined) {
                 selectedCandidate[candidate.candidate] = true;
                 await peerInfo[userId].peerConnection.addIceCandidate(candidate);
             };
         })
 
-        // socket.on("disconnect", ({ userId }) => {
-        //     delete peerInfo[userId];
-        // })
+        socket.on("userDisconnect", ({
+            userId
+        }) => {
+            delete peerInfo[userId];
+            //const disconnectUser = document.getElementById(userId);
+            //disconnectUser.remove();
+        })
 
         const useMedia = async() => {
             await getMedia();
-            //await createPeerConnection();
         }
 
         const share = async() => {
             socket.emit('join', '1234');
         }
 
-        // 내 비디오 정보를 가져옵니다.
+        // 내 비디오 & 오디오 정보를 가져옵니다.
         const getMedia = async() => {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({
-                    video: true
+                    video: true,
+                    audio: true,
                 });
 
                 localStream = stream;
@@ -133,13 +127,31 @@
             }
         };
 
+        // 내 비디오 & 오디오를 로컬에서 중지합니다.
+
+        const mediaControl = () => {
+            socket.emit("userDisconnect");
+
+            // 오디오 중지
+            localStream.getAudioTracks().forEach(track => {
+                track.enabled = !track.enabled;
+            });
+
+            // 비디오 중지
+            localStream.getVideoTracks().forEach(track => {
+                track.enabled = !track.enabled;
+            });
+        }
+
+
+        // 연결 후보 교환
         const icecandidate = (data) => {
-            if(data.candidate) {
-                // console.log("selected :", data.candidate);
+            if (data.candidate) {
                 socket.emit("icecandidate", data.candidate);
             }
         }
 
+        // 상대 영상 & 비디오 추가
         const addStream = (data) => {
             let videoArea = document.createElement("video");
             videoArea.autoplay = true;
@@ -147,8 +159,6 @@
 
             let container = document.getElementById("container");
             container.appendChild(videoArea);
-
-            //remoteVideo.srcObject = data.stream;
         };
 
         useMedia();

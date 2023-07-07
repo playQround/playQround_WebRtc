@@ -2,6 +2,7 @@ import { WebSocketGateway,
     WebSocketServer,
     SubscribeMessage,
     MessageBody } from "@nestjs/websockets";
+import { disconnect } from "process";
 import { Server, Socket } from 'socket.io'
 
 @WebSocketGateway()
@@ -38,10 +39,9 @@ export class webRtcGateway{
         client.broadcast.to("1234").emit("icecandidate", { userId: client.id, candidate });
     }
 
-    //
-    // @SubscribeMessage("disconnect")
-    // handleDisconnect(client: Socket, event: any) {
-    //     // 클라이언트의 연결 해제 이벤트 처리
-    //     client.broadcast.to("1234").emit("disconnect", { userId: client.id });
-    // }
+    @SubscribeMessage("userDisconnect")
+    handleDisconnect(client: Socket) {
+        // 클라이언트의 연결 해제 이벤트 처리
+        client.broadcast.to("1234").emit("userDisconnect", { userId: client.id });
+    }
 }
