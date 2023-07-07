@@ -23,11 +23,13 @@ export class webRtcGateway{
 
     // 3단계 - 응답 생성
     @SubscribeMessage("answer")
-    handleAnswerMessage(client: Socket, {answer, responseOffer}){
+    handleAnswerMessage(client: Socket, {answer, offer, toUserId}){
         client.broadcast.to("1234").emit("answer", { 
             userId: client.id,
             answer, 
-            responseOffer});
+            responseOffer: offer,
+            toUserId
+        });
     }
 
     // 4단계 - 연결 후보 교환

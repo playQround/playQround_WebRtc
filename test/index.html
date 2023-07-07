@@ -64,7 +64,6 @@
             const offer = await peerInfo[userId].peerConnection.createOffer();
             await peerInfo[userId].peerConnection.setLocalDescription(offer);
             socket.emit("offer", offer);
-            console.log('offering');
         });
 
         socket.on("offer", async({
@@ -74,46 +73,35 @@
             if (!peerInfo[userId]) {
                 await makePeerConnect(userId);
                 await peerInfo[userId].peerConnection.setRemoteDescription(offer);
-                //check//
-                const responseOffer = peerInfo[userId].peerConnection.remoteDescription;
-                console.log(responseOffer)
-                //
+                
                 const answer = await peerInfo[userId].peerConnection.createAnswer(offer);
 
                 await peerInfo[userId].peerConnection.setLocalDescription(answer);
-                socket.emit("answer", {answer, responseOffer});
-                console.log('answering')
+                socket.emit("answer", {answer, offer, toUserId: userId});
             }
         });
 
         socket.on("answer", async({
             userId,
             answer,
-            responseOffer
+            responseOffer,
+            toUserId
         }) => {
-            // check//
-            console.log("check")
-            console.log(peerInfo[userId].peerConnection.localDescription)
-            console.log(responseOffer);
-            //
             console.log("received answer", userId);
-            // console.log(peerInfo[userId].peerConnection.remoteDescription,
-            // peerInfo[userId].peerConnection.remoteDescription === null);
-            if (peerInfo[userId].peerConnection.remoteDescription === null){
+            console.log("find", userId, peerInfo[toUserId]);
+                if(peerInfo[toUserId] === undefined){
                 await peerInfo[userId].peerConnection.setRemoteDescription(answer);
             };
-            
         })
 
-        socket.on("icecandidate", ({
+        socket.on("icecandidate", async({
             userId,
             candidate
         }) => {
-            // console.log(candidate);
-            if (selectedCandidate[candidate] === undefined){
-                // console.log("connecting : ", candidate);
-                selectedCandidate[candidate] = true;
-                peerInfo[userId].peerConnection.addIceCandidate(candidate);
+            console.log(candidate);
+            if (selectedCandidate[candidate.candidate] === undefined){
+                selectedCandidate[candidate.candidate] = true;
+                await peerInfo[userId].peerConnection.addIceCandidate(candidate);
             };
         })
 
