@@ -2,10 +2,9 @@ import { WebSocketGateway,
     WebSocketServer,
     SubscribeMessage,
     MessageBody } from "@nestjs/websockets";
-import { disconnect } from "process";
 import { Server, Socket } from 'socket.io'
 
-@WebSocketGateway()
+@WebSocketGateway({cors : true})
 export class webRtcGateway{
     @WebSocketServer() server: Server;
 
