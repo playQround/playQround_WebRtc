@@ -1,7 +1,6 @@
 import { WebSocketGateway, 
     WebSocketServer,
-    SubscribeMessage,
-    MessageBody } from "@nestjs/websockets";
+    SubscribeMessage } from "@nestjs/websockets";
 import { Server, Socket } from 'socket.io'
 
 @WebSocketGateway({cors : true})
@@ -17,30 +16,29 @@ export class webRtcGateway{
 
     // 2단계 - 연결 요청
     @SubscribeMessage("offer")
-    handleOfferMessage(client: Socket, offer: any){
-        client.broadcast.to("1234").emit("offer", { userId: client.id, offer });
+    handleOfferMessage(client: Socket, { offer, roomId }){
+        client.broadcast.to(roomId).emit("offer", { userId: client.id, offer});
     }
 
     // 3단계 - 응답 생성
     @SubscribeMessage("answer")
-    handleAnswerMessage(client: Socket, {answer, offer, toUserId}){
-        client.broadcast.to("1234").emit("answer", { 
+    handleAnswerMessage(client: Socket, {answer, toUserId, roomId}){
+        client.broadcast.to(roomId).emit("answer", { 
             userId: client.id,
-            answer, 
-            responseOffer: offer,
-            toUserId
+            answer,
+            toUserId,
         });
     }
 
     // 4단계 - 연결 후보 교환
     @SubscribeMessage("icecandidate")
-    handleIcecandidateMessage(client: Socket, candidate: any){
-        client.broadcast.to("1234").emit("icecandidate", { userId: client.id, candidate });
+    handleIcecandidateMessage(client: Socket, { candidate, roomId }){
+        client.broadcast.to(roomId).emit("icecandidate", { userId: client.id, candidate });
     }
 
     @SubscribeMessage("userDisconnect")
-    handleDisconnect(client: Socket) {
+    handleDisconnect(client: Socket, roomId) {
         // 클라이언트의 연결 해제 이벤트 처리
-        client.broadcast.to("1234").emit("userDisconnect", { userId: client.id });
+        client.broadcast.to(roomId).emit("userDisconnect", { userId: client.id });
     }
 }

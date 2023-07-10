@@ -45,6 +45,7 @@
 
         // socket
         let socket = io("https://socket.playqround.site");
+        //let socket = io("http://localhost:3000");
 
         socket.on('enter', async({
             userId
@@ -52,13 +53,19 @@
             await makePeerConnect(userId);
             const offer = await peerInfo[userId].peerConnection.createOffer();
             await peerInfo[userId].peerConnection.setLocalDescription(offer);
-            socket.emit("offer", offer);
+            socket.emit("offer", {
+                offer,
+                roomId: "1234"
+
+            });
         });
 
         socket.on("offer", async({
             userId,
-            offer
+            offer,
         }) => {
+            console.log("start answering")
+            console.log("receive offer :", offer)
             if (!peerInfo[userId]) {
                 await makePeerConnect(userId);
                 await peerInfo[userId].peerConnection.setRemoteDescription(offer);
@@ -68,8 +75,8 @@
                 await peerInfo[userId].peerConnection.setLocalDescription(answer);
                 socket.emit("answer", {
                     answer,
-                    offer,
-                    toUserId: userId
+                    toUserId: userId,
+                    roomId: "1234",
                 });
             }
         });
@@ -77,7 +84,6 @@
         socket.on("answer", async({
             userId,
             answer,
-            responseOffer,
             toUserId
         }) => {
             if (peerInfo[toUserId] === undefined) {
@@ -120,6 +126,7 @@
                 });
 
                 localStream = stream;
+                localVideo.muted = true;
                 localVideo.srcObject = stream;
 
             } catch (error) {
@@ -147,7 +154,10 @@
         // 연결 후보 교환
         const icecandidate = (data) => {
             if (data.candidate) {
-                socket.emit("icecandidate", data.candidate);
+                socket.emit("icecandidate", {
+                    candidate: data.candidate,
+                    roomId: "1234"
+                });
             }
         }
 
