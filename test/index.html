@@ -44,7 +44,8 @@
         };
 
         // socket
-        let socket = io("https://socket.playqround.site");
+        //let socket = io("https://socket.playqround.site");
+        let socket = io("http://localhost:3000");
 
         socket.on('enter', async({
             userId

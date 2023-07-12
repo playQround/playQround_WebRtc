@@ -10,37 +10,45 @@ export class webRtcGateway{
 
     // 1단계 - 입장 알림
     @SubscribeMessage("join")
-    handleJoinMessage(client: Socket, roomId: any){
+    async handleJoinMessage(client: Socket, roomId: any){
         client.join(roomId);
         client.broadcast.to(roomId).emit("enter", { userId: client.id });
     }
 
     // 2단계 - 연결 요청
     @SubscribeMessage("offer")
-    handleOfferMessage(client: Socket, offer: any){
-        client.broadcast.to("1234").emit("offer", { userId: client.id, offer });
+    handleOfferMessage(client: Socket, { offer, selectedRoom }){
+        client.broadcast.to(selectedRoom).emit("offer", { userId: client.id, offer });
     }
 
     // 3단계 - 응답 생성
     @SubscribeMessage("answer")
-    handleAnswerMessage(client: Socket, {answer, offer, toUserId}){
-        client.broadcast.to("1234").emit("answer", { 
+    handleAnswerMessage(client: Socket, {answer, toUserId, selectedRoom}){
+        client.broadcast.to(selectedRoom).emit("answer", { 
             userId: client.id,
             answer, 
-            responseOffer: offer,
-            toUserId
+            toUserId,
         });
     }
 
     // 4단계 - 연결 후보 교환
     @SubscribeMessage("icecandidate")
-    handleIcecandidateMessage(client: Socket, candidate: any){
-        client.broadcast.to("1234").emit("icecandidate", { userId: client.id, candidate });
+    handleIcecandidateMessage(client: Socket, { candidate, selectedRoom }){
+        client.broadcast.to(selectedRoom).emit("icecandidate", { userId: client.id, candidate });
     }
 
-    @SubscribeMessage("userDisconnect")
-    handleDisconnect(client: Socket) {
+
+    // 본인 연결 해지
+    @SubscribeMessage("leaveRoom")
+    handleLeaveRoom(client: Socket, selectedRoom: any ) {
         // 클라이언트의 연결 해제 이벤트 처리
-        client.broadcast.to("1234").emit("userDisconnect", { userId: client.id });
+        client.emit("youLeaveRoom", { userId: client.id });
+        client.broadcast.to(selectedRoom).emit("someoneLeaveRoom", { userId: client.id });
+    }
+    
+    @SubscribeMessage("exit")
+    handlExitUser(client:Socket, selectedRoom: any ){
+        client.leave(selectedRoom);
+        console.log(client.id, selectedRoom, "퇴장")
     }
 }
