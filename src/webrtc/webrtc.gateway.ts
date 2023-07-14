@@ -49,6 +49,5 @@ export class webRtcGateway{
     @SubscribeMessage("exit")
     handlExitUser(client:Socket, selectedRoom: any ){
         client.leave(selectedRoom);
-        console.log(client.id, selectedRoom, "퇴장")
     }
 }
