@@ -1,7 +1,6 @@
 import { WebSocketGateway, 
     WebSocketServer,
-    SubscribeMessage,
-    MessageBody } from "@nestjs/websockets";
+    SubscribeMessage } from "@nestjs/websockets";
 import { Server, Socket } from 'socket.io'
 
 @WebSocketGateway({cors : true})
@@ -49,6 +48,5 @@ export class webRtcGateway{
     @SubscribeMessage("exit")
     handlExitUser(client:Socket, selectedRoom: any ){
         client.leave(selectedRoom);
-        console.log(client.id, selectedRoom, "퇴장")
     }
 }
