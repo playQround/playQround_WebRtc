@@ -12,6 +12,7 @@ export class webRtcGateway{
     @SubscribeMessage("join")
     async handleJoinMessage(client: Socket, roomId: any){
         client.join(roomId);
+        console.log("join", roomId)
         client.broadcast.to(roomId).emit("enter", { userId: client.id });
     }
 
@@ -49,5 +50,5 @@ export class webRtcGateway{
     @SubscribeMessage("exit")
     handlExitUser(client:Socket, selectedRoom: any ){
         client.leave(selectedRoom);
+        }
     }
-}
